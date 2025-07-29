@@ -1,23 +1,23 @@
+
 import streamlit as st
 import json
 import requests
 import os
 from dotenv import load_dotenv
 from firebase_setup import get_database
+
 # TMDB'de arama yapan yardımcı fonksiyon
 def tmdb_search(query, search_type):
     type_map = {"Movie": "movie", "TV Show": "tv", "Actor/Actress": "person"}
-    media_type = type_map.get(search_type, "movie")  # "movie" varsayılan
-
+    media_type = type_map.get(search_type, "movie")
     url = f"https://api.themoviedb.org/3/search/{media_type}"
     params = {"api_key": TMDB_API_KEY, "query": query}
     response = requests.get(url, params=params)
-
     if response.status_code != 200:
         st.error("🔌 TMDB API'den veri alınamadı!")
         return []
-
     return response.json().get("results", [])
+
 load_dotenv()
 TMDB_API_KEY = os.getenv("TMDB_API_KEY")
 OMDB_API_KEY = os.getenv("OMDB_API_KEY")
@@ -34,17 +34,6 @@ search_type = st.radio("Search type:", ["Movie", "TV Show", "Actor/Actress"], ho
 default_query = st.query_params.get("q", "")
 query = st.text_input("🔍 Search for a title or actor:", value=default_query, key="search_box")
 
-def tmdb_search(query, search_type):
-    type_map = {"Movie": "movie", "TV Show": "tv", "Actor/Actress": "person"}
-    media_type = type_map.get(search_type, "movie")
-    url = f"https://api.themoviedb.org/3/search/{media_type}"
-    params = {"api_key": TMDB_API_KEY, "query": query}
-    response = requests.get(url, params=params)
-    if response.status_code != 200:
-        st.error("🔌 TMDB API'den veri alınamadı!")
-        return []
-    return response.json().get("results", [])
-
 def fetch_omdb_rating(imdb_id):
     url = f"http://www.omdbapi.com/?apikey={OMDB_API_KEY}&i={imdb_id}"
     response = requests.get(url)
@@ -60,15 +49,13 @@ def fetch_actor_movies(person_id):
     response = requests.get(url)
     return response.json().get("cast", [])
 
-# Arama Sonuçları
 if query:
     results = tmdb_search(query, search_type)
     if results:
-        type_map = {"Movie": "movie", "TV Show": "tv", "Actor/Actress": "person"}
-        media_type = type_map.get(search_type, "movie")
-
         for r in results:
             tmdb_id = r.get("id")
+            type_map = {"Movie": "movie", "TV Show": "tv", "Actor/Actress": "person"} 
+            media_type = type_map.get(search_type, "movie")
             external_ids_url = f"https://api.themoviedb.org/3/{media_type}/{tmdb_id}/external_ids?api_key={TMDB_API_KEY}"
             imdb_id_resp = requests.get(external_ids_url).json().get("imdb_id")
             r["imdb_id"] = imdb_id_resp
@@ -126,7 +113,6 @@ if query:
     else:
         st.warning("❌ Hiç sonuç bulunamadı.")
 
-# Watchlist
 st.markdown("---")
 category_selected = st.radio("📂 Watchlist kategorisi:", ["Movies", "TV Shows"], horizontal=True)
 db_key = "movies" if category_selected == "Movies" else "shows"
