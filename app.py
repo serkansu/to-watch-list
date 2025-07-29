@@ -1,16 +1,17 @@
+
 import streamlit as st
 import json
 import requests
 import os
-from dotenv import load_dotenv  # ← 1) Bunu zaten var, yoksa buraya ekle
+from datetime import datetime, timedelta
+from dotenv import load_dotenv
 
-load_dotenv()  # ← 2) .env dosyasını yükler (lokal için)
-TMDB_API_KEY = os.getenv("TMDB_API_KEY")  # ← 3) API key’i ortamdan çeker
-OMDB_API_KEY = os.getenv("OMDB_API_KEY")  # ← 4) OMDB key’i ortamdan çeker
+load_dotenv()
+TMDB_API_KEY = os.getenv("TMDB_API_KEY")
+OMDB_API_KEY = os.getenv("OMDB_API_KEY")
 
 from firebase_setup import get_database
 
-# TMDB'de arama yapan yardımcı fonksiyon
 def tmdb_search(query, search_type):
     type_map = {"Movie": "movie", "TV Show": "tv", "Actor/Actress": "person"}
     media_type = type_map.get(search_type, "movie")
@@ -21,22 +22,6 @@ def tmdb_search(query, search_type):
         st.error("🔌 TMDB API'den veri alınamadı!")
         return []
     return response.json().get("results", [])
-
-load_dotenv()
-TMDB_API_KEY = os.getenv("TMDB_API_KEY")
-OMDB_API_KEY = os.getenv("OMDB_API_KEY")
-ref = get_database()
-
-st.set_page_config(page_title="Serkan's Watch App", layout="centered")
-st.title("🎬 Serkan's Watch App")
-
-if st.button("🔄 Refresh page", key="refresh", help="Sayfayı yenile"):
-    st.query_params.update({"q": ""})
-    st.rerun()
-
-search_type = st.radio("Search type:", ["Movie", "TV Show", "Actor/Actress"], horizontal=True)
-default_query = st.query_params.get("q", "")
-query = st.text_input("🔍 Search for a title or actor:", value=default_query, key="search_box")
 
 def fetch_omdb_rating(imdb_id):
     url = f"http://www.omdbapi.com/?apikey={OMDB_API_KEY}&i={imdb_id}"
@@ -53,11 +38,72 @@ def fetch_actor_movies(person_id):
     response = requests.get(url)
     return response.json().get("cast", [])
 
+def list_and_add_recent(content_type, label, db_category, api_endpoint, date_field, key_prefix):
+    today = datetime.now().date()
+    past_date = today - timedelta(days=28)
+    url = f"https://api.themoviedb.org/3/discover/{api_endpoint}"
+    params = {
+        "api_key": TMDB_API_KEY,
+        "sort_by": f"{date_field}.desc",
+        f"{date_field}.gte": past_date.isoformat(),
+        f"{date_field}.lte": today.isoformat(),
+        "language": "en-US"
+    }
+    resp = requests.get(url, params=params)
+    items = resp.json().get("results", []) if resp.status_code == 200 else []
+    st.success(f"{label} Found {len(items)} new {content_type}s in the last 4 weeks.")
+    for item in items[:10]:
+        title = item.get("title") or item.get("name", "Unknown")
+        year = (item.get("release_date") or item.get("first_air_date") or "")[:4]
+        poster_path = item.get("poster_path")
+        poster_url = f"https://image.tmdb.org/t/p/w500{poster_path}" if poster_path else ""
+
+        st.markdown(f"**{title}** ({year})")
+        if poster_url:
+            st.image(poster_url, width=120)
+
+        with st.form(f"{key_prefix}_form_{item['id']}"):
+            priority = st.slider("🎯 İzleme Sırası (1-100)", 1, 100, 50, key=f"{key_prefix}_priority_{item['id']}")
+            submitted = st.form_submit_button("➕ Listeye Ekle")
+            if submitted:
+                ref.child(f"to_watch_firebase/{db_category}/{item['id']}").set({
+                    "title": title,
+                    "year": year,
+                    "poster": poster_url,
+                    "imdbRating": "N/A",
+                    "rtRating": "N/A",
+                    "priority": priority
+                })
+                st.success("✅ Başarıyla eklendi.")
+
+ref = get_database()
+
+st.set_page_config(page_title="Serkan's Watch App", layout="centered")
+st.title("🎬 Serkan's Watch App")
+
+col_refresh, col_movies, col_shows = st.columns([1, 2, 2])
+
+with col_refresh:
+    if st.button("🔄 Refresh page", key="refresh", help="Sayfayı yenile"):
+        st.query_params.update({"q": ""})
+        st.rerun()
+
+with col_movies:
+    if st.button("🆕 Last 4 Weeks – Movies"):
+        list_and_add_recent("movie", "🎬", "movies", "movie", "primary_release_date", "recent_movie")
+
+with col_shows:
+    if st.button("📺 Last 4 Weeks – TV Shows"):
+        list_and_add_recent("tv show", "📺", "shows", "tv", "first_air_date", "recent_show")
+
+search_type = st.radio("Search type:", ["Movie", "TV Show", "Actor/Actress"], horizontal=True)
+default_query = st.query_params.get("q", "")
+query = st.text_input("🔍 Search for a title or actor:", value=default_query, key="search_box")
+
 if query:
     results = tmdb_search(query, search_type)
 
     if results:
-        # 🎭 Eğer Actor/Actress seçiliyse, oynadığı filmleri al
         if search_type == "Actor/Actress":
             results_expanded = []
             for actor in results:
@@ -112,7 +158,6 @@ if query:
                     priority = st.slider("🎯 İzleme Sırası (1-100)", 1, 100, 50)
                     submitted = st.form_submit_button("➕ Listeye Ekle")
                     if submitted:
-                        # 🧠 Kategori belirle (doğru şekilde)
                         if search_type == "Movie":
                             category = "movies"
                         elif search_type == "TV Show":
