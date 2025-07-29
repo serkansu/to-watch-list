@@ -1,131 +1,152 @@
+
 import streamlit as st
-from firebase_setup import get_firestore
-from tmdb import search_movie, search_tv, search_by_actor  # Actor arama fonksiyonu eklendi
+import json
+import requests
+import os
+from dotenv import load_dotenv
+from firebase_setup import get_database
 
-db = get_firestore()
+load_dotenv()
+TMDB_API_KEY = os.getenv("TMDB_API_KEY")
+OMDB_API_KEY = os.getenv("OMDB_API_KEY")
+ref = get_database()
 
-st.set_page_config(page_title="Serkan's Watchagain Movies & Series ONLINE", layout="wide")
-st.markdown("""
-    <h1 style='text-align:center;'>🍿 <b>Serkan's Watchagain Movies & Series <span style="color:#2ecc71;">ONLINE ✅</span></b></h1>
-""", unsafe_allow_html=True)
+st.set_page_config(page_title="Serkan's Watch App", layout="centered")
 
-col1, col2 = st.columns([1, 2])
-with col1:
-    if st.button("🏠 Go to Top"):
-        st.rerun()
-with col2:
-    if "show_posters" not in st.session_state:
-        st.session_state["show_posters"] = True
-    if st.button("🖼️ Toggle Posters"):
-        st.session_state["show_posters"] = not st.session_state["show_posters"]
+st.title("🎬 Serkan's Watch App")
 
-show_posters = st.session_state["show_posters"]
-media_type = st.radio("Search type:", ["Movie", "TV Show", "Actor/Actress"], horizontal=True)
-
-if "query" not in st.session_state:
-    st.session_state.query = ""
-
-query = st.text_input(f"🔍 Search for a {media_type.lower()}", value=st.session_state.query, key="query_input")
-if query:
-    st.session_state.query = query
-    if media_type == "Movie":
-        results = search_movie(query)
-    elif media_type == "TV Show":
-        results = search_tv(query)
-    else:
-        results = search_by_actor(query)
-
-    try:
-        results = sorted(results, key=lambda x: x.get("cineselectRating", 0), reverse=True)
-    except:
-        pass
-
-    if not results:
-        st.error("❌ No results found.")
-    else:
-        for idx, item in enumerate(results):
-            st.divider()
-            if item["poster"] and show_posters:
-                st.image(item["poster"], width=180)
-            st.markdown(f"**{idx+1}. {item['title']} ({item['year']})**")
-            imdb_display = f"{item['imdb']:.1f}" if isinstance(item['imdb'], (int, float)) and item['imdb'] > 0 else "N/A"
-            rt_display = f"{item['rt']}%" if isinstance(item['rt'], (int, float)) and item['rt'] > 0 else "N/A"
-            st.markdown(f"⭐ IMDb: {imdb_display} &nbsp;&nbsp; 🍅 RT: {rt_display}", unsafe_allow_html=True)
-
-            slider_key = f"stars_{item['id']}"
-            manual_key = f"manual_{item['id']}"
-            slider_val = st.slider("🎯 CineSelect Rating:", 1, 10000, st.session_state.get(slider_key, 5000), step=10, key=slider_key)
-            manual_val = st.number_input("Manual value:", min_value=1, max_value=10000, value=slider_val, step=1, key=manual_key)
-
-            if st.button("Add to Favorites", key=f"btn_{item['id']}"):
-                media_key = "movie" if media_type == "Movie" else ("show" if media_type == "TV Show" else "movie")
-                db.collection("favorites").document(item["id"]).set({
-                    "id": item["id"],
-                    "title": item["title"],
-                    "year": item["year"],
-                    "imdb": item["imdb"],
-                    "poster": item["poster"],
-                    "rt": item["rt"],
-                    "cineselectRating": manual_val,
-                    "type": media_key
-                })
-                st.success(f"✅ {item['title']} added to favorites!")
-                st.session_state.query = ""
-                st.rerun()
-
-st.divider()
-st.subheader("❤️ Your Favorites")
-sort_option = st.selectbox("Sort by:", ["IMDb", "RT", "CineSelect", "Year"], index=2)
-
-def get_sort_key(fav):
-    try:
-        if sort_option == "IMDb":
-            return float(fav.get("imdb", 0))
-        elif sort_option == "RT":
-            return float(fav.get("rt", 0))
-        elif sort_option == "CineSelect":
-            return fav.get("cineselectRating", 0)
-        elif sort_option == "Year":
-            return int(fav.get("year", 0))
-    except:
-        return 0
-
-def show_favorites(fav_type, label):
-    docs = db.collection("favorites").where("type", "==", fav_type).stream()
-    favorites = sorted([doc.to_dict() for doc in docs], key=get_sort_key, reverse=True)
-
-    st.markdown(f"### 📁 {label}")
-    for idx, fav in enumerate(favorites):
-        imdb_display = f"{fav['imdb']:.1f}" if isinstance(fav["imdb"], (int, float)) else "N/A"
-        rt_display = f"{fav['rt']}%" if isinstance(fav["rt"], (int, float)) else "N/A"
-        cols = st.columns([1, 5, 1, 1])
-        with cols[0]:
-            if show_posters and fav.get("poster"):
-                st.image(fav["poster"], width=120)
-        with cols[1]:
-            st.markdown(f"**{idx+1}. {fav['title']} ({fav['year']})** | ⭐ IMDb: {imdb_display} | 🍅 RT: {rt_display} | 🎯 CS: {fav.get('cineselectRating', 'N/A')}")
-        with cols[2]:
-            if st.button("❌", key=f"remove_{fav['id']}"):
-                db.collection("favorites").document(fav["id"]).delete()
-                st.rerun()
-        with cols[3]:
-            if st.button("✏️", key=f"edit_{fav['id']}"):
-                st.session_state[f"edit_mode_{fav['id']}"] = True
-
-        if st.session_state.get(f"edit_mode_{fav['id']}", False):
-            new_val = st.slider("🎯 CS:", 1, 10000, fav.get("cineselectRating", 5000), step=10, key=f"slider_{fav['id']}")
-            if st.button("✅ Save", key=f"save_{fav['id']}"):
-                db.collection("favorites").document(fav["id"]).update({"cineselectRating": new_val})
-                st.success(f"✅ Updated {fav['title']}'s rating.")
-                st.session_state[f"edit_mode_{fav['id']}"] = False
-                st.rerun()
-
-if media_type == "Movie":
-    show_favorites("movie", "Favorite Movies")
-elif media_type == "TV Show":
-    show_favorites("show", "Favorite TV Shows")
-
-st.markdown("---")
-if st.button("🔝 Go to Top Again"):
+# Refresh butonu
+if st.button("🔄 Refresh page", key="refresh", help="Sayfayı yenile"):
+    st.query_params.update({"q": ""})
     st.rerun()
-st.markdown("<p style='text-align: center; color: gray;'>Created by <b>SS</b></p>", unsafe_allow_html=True)
+
+# Arama Tipi ve Girdi
+search_type = st.radio("Search type:", ["Movie", "TV Show", "Actor/Actress"], horizontal=True)
+default_query = st.query_params.get("q", "")
+query = st.text_input("🔍 Search for a title or actor:", value=default_query, key="search_box")
+
+# API Fonksiyonları
+def tmdb_search(query, search_type):
+    type_map = {"Movie": "movie", "TV Show": "tv", "Actor/Actress": "person"}
+    url = f"https://api.themoviedb.org/3/search/{type_map[search_type]}"
+    params = {"api_key": TMDB_API_KEY, "query": query}
+    response = requests.get(url, params=params)
+    return response.json().get("results", [])
+
+def fetch_omdb_rating(imdb_id):
+    url = f"http://www.omdbapi.com/?apikey={OMDB_API_KEY}&i={imdb_id}"
+    response = requests.get(url)
+    if response.status_code == 200:
+        data = response.json()
+        imdb_rating = data.get("imdbRating", "N/A")
+        rt_rating = next((r["Value"] for r in data.get("Ratings", []) if r["Source"] == "Rotten Tomatoes"), "N/A")
+        return imdb_rating, rt_rating
+    return "N/A", "N/A"
+
+def fetch_actor_movies(person_id):
+    url = f"https://api.themoviedb.org/3/person/{person_id}/movie_credits?api_key={TMDB_API_KEY}"
+    response = requests.get(url)
+    return response.json().get("cast", [])
+
+# Arama Sonuçları
+if query:
+    results = tmdb_search(query, search_type)
+    if results:
+        # IMDb ID'leri önceden çekiliyor
+        for r in results:
+            tmdb_id = r.get("id")
+            media_type = "movie" if search_type == "Movie" else "tv"
+            external_ids_url = f"https://api.themoviedb.org/3/{media_type}/{tmdb_id}/external_ids?api_key={TMDB_API_KEY}"
+            imdb_id_resp = requests.get(external_ids_url).json().get("imdb_id")
+            r["imdb_id"] = imdb_id_resp
+
+        st.success(f"🔍 {len(results)} sonuç bulundu.")
+        sort_option = st.radio("📊 Sırala:", ["IMDb Rating", "Rotten Tomatoes", "Year"], horizontal=True)
+
+        def extract_sort_value(item, key):
+            if key == "IMDb Rating":
+                rating, _ = fetch_omdb_rating(item.get("imdb_id") or "")
+                return float(rating) if rating != "N/A" else 0.0
+            elif key == "Rotten Tomatoes":
+                _, rt = fetch_omdb_rating(item.get("imdb_id") or "")
+                return int(rt.replace('%', '')) if rt.endswith('%') else 0
+            elif key == "Year":
+                date = item.get("release_date") or item.get("first_air_date") or "0000"
+                return int(date[:4]) if date[:4].isdigit() else 0
+            return 0
+
+        results.sort(key=lambda x: extract_sort_value(x, sort_option), reverse=True)
+
+        for r in results:
+            tmdb_id = r.get("id")
+            title = r.get("title") or r.get("name")
+            year = (r.get("release_date") or r.get("first_air_date") or "")[:4]
+            poster_path = r.get("poster_path")
+            poster_url = f"https://image.tmdb.org/t/p/w500{poster_path}" if poster_path else ""
+            media_type = "movie" if search_type == "Movie" else "tv"
+            imdb_id_resp = r.get("imdb_id")
+            imdb_rating, rt_rating = fetch_omdb_rating(imdb_id_resp) if imdb_id_resp else ("N/A", "N/A")
+
+            cols = st.columns([1, 3])
+            with cols[0]:
+                if poster_url:
+                    st.image(poster_url, width=100)
+            with cols[1]:
+                st.markdown(f"**{title}** ({year})")
+                st.markdown(f"🎯 IMDb: {imdb_rating} | 🍅 RT: {rt_rating}")
+                form_key = f"form_{imdb_id_resp or tmdb_id}_{title.replace(' ', '_')}"
+                with st.form(form_key):
+                    priority = st.slider("🎯 İzleme Sırası (1-100)", 1, 100, 50)
+                    submitted = st.form_submit_button("➕ Listeye Ekle")
+                    if submitted:
+                        category = "movies" if search_type == "Movie" else "shows"
+                        ref.child(f"to_watch_firebase/{category}/{imdb_id_resp}").set({
+                            "title": title,
+                            "year": year,
+                            "poster": poster_url,
+                            "imdbRating": imdb_rating,
+                            "rtRating": rt_rating,
+                            "priority": priority
+                        })
+                        st.success("✅ Başarıyla eklendi.")
+                        st.query_params.update({"q": ""})
+                        st.rerun()
+
+# Watchlist
+st.markdown("---")
+category_selected = st.radio("📂 Watchlist kategorisi:", ["Movies", "TV Shows"], horizontal=True)
+db_key = "movies" if category_selected == "Movies" else "shows"
+st.markdown(f"### 📺 Watchlist: {category_selected}")
+
+movies_data = ref.child(f"to_watch_firebase/{db_key}").get()
+if movies_data:
+    sorted_movies = sorted(movies_data.items(), key=lambda x: x[1].get("priority", 50))
+    for i, (imdb_id, movie) in enumerate(sorted_movies, start=1):
+        cols = st.columns([1, 3])
+        with cols[0]:
+            if movie.get("poster"):
+                st.image(movie["poster"], width=120)
+        with cols[1]:
+            st.markdown(f"**{i}) {movie['title']}** ({movie['year']})")
+            st.markdown(f"🎯 IMDb: {movie['imdbRating']} | 🍅 RT: {movie['rtRating']}")
+            new_priority = st.slider(f"🎛️ Öncelik:", 1, 100, movie["priority"], key=f"edit_{imdb_id}")
+            col1, col2, col3 = st.columns(3)
+            with col1:
+                if st.button("📎 Güncelle", key=f"save_{imdb_id}"):
+                    ref.child(f"to_watch_firebase/{db_key}/{imdb_id}/priority").set(new_priority)
+                    st.success("✅ Güncellendi.")
+                    st.rerun()
+            with col2:
+                if st.button("🗑️ Sil", key=f"delete_{imdb_id}"):
+                    ref.child(f"to_watch_firebase/{db_key}/{imdb_id}").delete()
+                    st.warning("❌ Silindi.")
+                    st.rerun()
+            with col3:
+                if st.button("📌 Başa Tuttur", key=f"pin_{imdb_id}"):
+                    lowest_priority = min(x[1]["priority"] for x in sorted_movies)
+                    new_top_priority = max(1, lowest_priority - 1)
+                    ref.child(f"to_watch_firebase/{db_key}/{imdb_id}/priority").set(new_top_priority)
+                    st.success("📌 Listenin en başına alındı.")
+                    st.rerun()
+else:
+    st.info("Henüz bu kategoriye öğe eklenmemiş.")
