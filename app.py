@@ -1,9 +1,13 @@
-
 import streamlit as st
 import json
 import requests
 import os
-from dotenv import load_dotenv
+from dotenv import load_dotenv  # ← 1) Bunu zaten var, yoksa buraya ekle
+
+load_dotenv()  # ← 2) .env dosyasını yükler (lokal için)
+TMDB_API_KEY = os.getenv("TMDB_API_KEY")  # ← 3) API key’i ortamdan çeker
+OMDB_API_KEY = os.getenv("OMDB_API_KEY")  # ← 4) OMDB key’i ortamdan çeker
+
 from firebase_setup import get_database
 
 # TMDB'de arama yapan yardımcı fonksiyon
