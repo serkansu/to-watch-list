@@ -13,29 +13,23 @@ ref = get_database()
 st.set_page_config(page_title="Serkan's Watch App", layout="centered")
 st.title("🎬 Serkan's Watch App")
 
-# Refresh butonu
 if st.button("🔄 Refresh page", key="refresh", help="Sayfayı yenile"):
     st.query_params.update({"q": ""})
     st.rerun()
 
-# Arama Tipi ve Girdi
 search_type = st.radio("Search type:", ["Movie", "TV Show", "Actor/Actress"], horizontal=True)
 default_query = st.query_params.get("q", "")
 query = st.text_input("🔍 Search for a title or actor:", value=default_query, key="search_box")
 
-# API Fonksiyonları
-# Kullanıcıdan gelen search_type'ı API'de geçerli olan tipe çevir
+def tmdb_search(query, search_type):
     type_map = {"Movie": "movie", "TV Show": "tv", "Actor/Actress": "person"}
-    media_type = type_map.get(search_type, "movie")  # Default olarak "movie" kabul et
-
+    media_type = type_map.get(search_type, "movie")
     url = f"https://api.themoviedb.org/3/search/{media_type}"
     params = {"api_key": TMDB_API_KEY, "query": query}
     response = requests.get(url, params=params)
-
     if response.status_code != 200:
         st.error("🔌 TMDB API'den veri alınamadı!")
         return []
-
     return response.json().get("results", [])
 
 def fetch_omdb_rating(imdb_id):
@@ -57,10 +51,11 @@ def fetch_actor_movies(person_id):
 if query:
     results = tmdb_search(query, search_type)
     if results:
+        type_map = {"Movie": "movie", "TV Show": "tv", "Actor/Actress": "person"}
+        media_type = type_map.get(search_type, "movie")
+
         for r in results:
             tmdb_id = r.get("id")
-            type_map = {"Movie": "movie", "TV Show": "tv", "Actor/Actress": "person"} 
-            media_type = type_map.get(search_type, "movie")
             external_ids_url = f"https://api.themoviedb.org/3/{media_type}/{tmdb_id}/external_ids?api_key={TMDB_API_KEY}"
             imdb_id_resp = requests.get(external_ids_url).json().get("imdb_id")
             r["imdb_id"] = imdb_id_resp
