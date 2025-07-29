@@ -4,7 +4,20 @@ import requests
 import os
 from dotenv import load_dotenv
 from firebase_setup import get_database
+# TMDB'de arama yapan yardımcı fonksiyon
+def tmdb_search(query, search_type):
+    type_map = {"Movie": "movie", "TV Show": "tv", "Actor/Actress": "person"}
+    media_type = type_map.get(search_type, "movie")  # "movie" varsayılan
 
+    url = f"https://api.themoviedb.org/3/search/{media_type}"
+    params = {"api_key": TMDB_API_KEY, "query": query}
+    response = requests.get(url, params=params)
+
+    if response.status_code != 200:
+        st.error("🔌 TMDB API'den veri alınamadı!")
+        return []
+
+    return response.json().get("results", [])
 load_dotenv()
 TMDB_API_KEY = os.getenv("TMDB_API_KEY")
 OMDB_API_KEY = os.getenv("OMDB_API_KEY")
