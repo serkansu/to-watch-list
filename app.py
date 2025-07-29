@@ -55,7 +55,17 @@ def fetch_actor_movies(person_id):
 
 if query:
     results = tmdb_search(query, search_type)
+
     if results:
+        # 🎭 Eğer Actor/Actress seçiliyse, oynadığı filmleri al
+        if search_type == "Actor/Actress":
+            results_expanded = []
+            for actor in results:
+                actor_id = actor.get("id")
+                actor_movies = fetch_actor_movies(actor_id)
+                results_expanded.extend(actor_movies)
+            results = results_expanded
+
         for r in results:
             tmdb_id = r.get("id")
             type_map = {"Movie": "movie", "TV Show": "tv", "Actor/Actress": "person"} 
