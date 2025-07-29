@@ -112,7 +112,16 @@ if query:
                     priority = st.slider("🎯 İzleme Sırası (1-100)", 1, 100, 50)
                     submitted = st.form_submit_button("➕ Listeye Ekle")
                     if submitted:
-                        category = "movies" if search_type == "Movie" else "shows"
+                        # 🧠 Kategori belirle (doğru şekilde)
+                        if search_type == "Movie":
+                            category = "movies"
+                        elif search_type == "TV Show":
+                            category = "shows"
+                        else:
+                            media_type = r.get("media_type", "")
+                            if not media_type:
+                                media_type = "tv" if r.get("name") else "movie"
+                            category = "shows" if media_type == "tv" else "movies"
                         ref.child(f"to_watch_firebase/{category}/{imdb_id_resp or tmdb_id}").set({
                             "title": title,
                             "year": year,
