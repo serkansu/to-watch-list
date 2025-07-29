@@ -24,11 +24,18 @@ default_query = st.query_params.get("q", "")
 query = st.text_input("🔍 Search for a title or actor:", value=default_query, key="search_box")
 
 # API Fonksiyonları
-def tmdb_search(query, search_type):
+# Kullanıcıdan gelen search_type'ı API'de geçerli olan tipe çevir
     type_map = {"Movie": "movie", "TV Show": "tv", "Actor/Actress": "person"}
-    url = f"https://api.themoviedb.org/3/search/{type_map[search_type]}"
+    media_type = type_map.get(search_type, "movie")  # Default olarak "movie" kabul et
+
+    url = f"https://api.themoviedb.org/3/search/{media_type}"
     params = {"api_key": TMDB_API_KEY, "query": query}
     response = requests.get(url, params=params)
+
+    if response.status_code != 200:
+        st.error("🔌 TMDB API'den veri alınamadı!")
+        return []
+
     return response.json().get("results", [])
 
 def fetch_omdb_rating(imdb_id):
