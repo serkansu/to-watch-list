@@ -184,9 +184,9 @@ if query:
             poster_url = f"https://image.tmdb.org/t/p/w500{poster_path}" if poster_path else ""
             imdb_id_resp = r.get("imdb_id")
             if imdb_id_resp:
-    imdb_rating, rt_rating = fetch_omdb_rating(imdb_id_resp)
-else:
-    imdb_rating, rt_rating = fetch_tmdb_rating(tmdb_id)
+                imdb_rating, rt_rating = fetch_omdb_rating(imdb_id_resp)
+            else:
+                imdb_rating, rt_rating = fetch_tmdb_rating(tmdb_id)
 
             cols = st.columns([1, 3])
             with cols[0]:
