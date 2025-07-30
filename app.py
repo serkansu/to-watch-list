@@ -1,3 +1,14 @@
+# Dummy veriler – son 4 haftalık içerikler (test amaçlı)
+last_4_weeks_movies = [
+    {"title": "Test Movie 1"},
+    {"title": "Test Movie 2"},
+]
+
+last_4_weeks_shows = [
+    {"title": "Test Show 1"},
+    {"title": "Test Show 2"},
+]
+
 
 import streamlit as st
 import json
