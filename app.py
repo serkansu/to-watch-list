@@ -46,24 +46,19 @@ def fetch_actor_movies(person_id):
 st.set_page_config(page_title="Serkan's Watch App", layout="centered")
 st.title("🎬 Serkan's Watch App")
 
-col_center = st.columns([1, 2, 1])[1]
-with col_center:
-    if st.button("🧹🔄 Clean & Refresh", key="clean_refresh_button"):
-        st.query_params.clear()
-        st.rerun()
-
-
 col1, col2, col3 = st.columns([1, 2, 2])
 with col1:
-    
+    if st.button("🔄", help="Refresh"):
+        st.query_params.update({"q": ""})
+        st.rerun()
 
 with col2:
-    if st.button("🆕 Last 4 Weeks – Movies", key="last4weeks_movies"):
+    if st.button("🆕 Last 4 Weeks – Movies"):
         st.session_state['recent_type'] = "movie"
         st.session_state['trigger'] = True
 
 with col3:
-    if st.button("📺 Last 4 Weeks – TV Shows", key="last4weeks_tv"):
+    if st.button("📺 Last 4 Weeks – TV Shows"):
         st.session_state['recent_type'] = "tv"
         st.session_state['trigger'] = True
 
@@ -172,7 +167,7 @@ if query:
                 st.markdown(f"🎯 IMDb: {imdb_rating} | 🍅 RT: {rt_rating}")
                 with st.form(f"form_{imdb_id_resp or tmdb_id}_{title.replace(' ', '_')}"):
                     priority = st.slider("🎯 İzleme Sırası (1–100)", 1, 100, 50)
-                    submitted = st.form_submit_button("➕ Listeye Ekle", key="form_addtolist")
+                    submitted = st.form_submit_button("➕ Listeye Ekle")
                     if submitted:
                         category = "movies" if search_type == "Movie" else "shows"
                         ref.child(f"to_watch_firebase/{category}/{imdb_id_resp or tmdb_id}").set({
@@ -232,121 +227,3 @@ if movies_data:
                     st.rerun()
 else:
     st.info("Henüz bu kategoriye öğe eklenmemiş.")
-
-# === ENTEGRE EDİLEN 5 ÖZELLİK ===
-
-import streamlit as st
-import requests
-import os
-import json
-from datetime import datetime, timedelta
-from dotenv import load_dotenv
-
-load_dotenv()
-TMDB_API_KEY = os.getenv('TMDB_API_KEY')
-OMDB_API_KEY = os.getenv('OMDB_API_KEY')
-from firebase_setup import get_database
-ref = get_database()
-
-# Yardımcı Fonksiyonlar
-def tmdb_search(query, search_type):
-    type_map = {'Movie': 'movie', 'TV Show': 'tv', 'Actor/Actress': 'person'}
-    media_type = type_map.get(search_type, 'movie')
-    url = f'https://api.themoviedb.org/3/search/{media_type}'
-    params = {'api_key': TMDB_API_KEY, 'query': query}
-    response = requests.get(url, params=params)
-    if response.status_code != 200:
-        st.error('TMDB API hatası!')
-        return []
-    return response.json().get('results', [])
-
-def fetch_omdb_rating(imdb_id):
-    url = f'http://www.omdbapi.com/?apikey={OMDB_API_KEY}&i={imdb_id}'
-    response = requests.get(url)
-    try:
-        data = response.json()
-        imdb_rating = data.get('imdbRating', 'N/A')
-        rt_rating = next((r['Value'] for r in data.get('Ratings', []) if r['Source'] == 'Rotten Tomatoes'), 'N/A')
-        return imdb_rating, rt_rating
-    except:
-        return 'N/A', 'N/A'
-
-# Sayfa başlığı ve layout
-st.set_page_config(page_title='🎬 Serkan Watch App', layout='centered')
-st.title('🎬 Serkan Watch App')
-
-# Butonlar ve Temizleme
-col1, col2, col3, col4 = st.columns([1,1,2,2])
-with col1:
-    
-with col2:
-    st.write("")  # placeholder eklendi
-    
-with col3:
-    if st.button("🆕 Last 4 Weeks – Movies", key="last4weeks_movies"):
-        st.session_state['recent_type'] = 'movie'
-        st.session_state['trigger'] = True
-with col4:
-    if st.button("📺 Last 4 Weeks – TV Shows", key="last4weeks_tv"):
-        st.session_state['recent_type'] = 'tv'
-        st.session_state['trigger'] = True
-
-# Son 4 Hafta İçeriği
-if st.session_state.get('trigger', False):
-    st.session_state['trigger'] = False
-    content_type = st.session_state['recent_type']
-    today = datetime.now().date()
-    past_date = today - timedelta(days=28)
-    endpoint = 'movie' if content_type == 'movie' else 'tv'
-    date_field = 'primary_release_date' if content_type == 'movie' else 'first_air_date'
-    url = f'https://api.themoviedb.org/3/discover/{endpoint}'
-    params = {
-        'api_key': TMDB_API_KEY,
-        'sort_by': f'{date_field}.desc',
-        f'{date_field}.gte': past_date.isoformat(),
-        f'{date_field}.lte': today.isoformat(),
-        'language': 'en-US'
-    }
-    resp = requests.get(url, params=params)
-    items = resp.json().get('results', []) if resp.status_code == 200 else []
-    for item in items[:10]:
-        title = item.get('title') or item.get('name', 'Unknown')
-        year = (item.get('release_date') or item.get('first_air_date') or '')[:4]
-        poster_path = item.get('poster_path')
-        poster_url = f'https://image.tmdb.org/t/p/w500{poster_path}' if poster_path else ''
-        tmdb_id = item.get('id')
-        vote_avg = item.get('vote_average')
-        vote_count = item.get('vote_count')
-        fallback_rating = f'⭐ {vote_avg}/10 ({vote_count} oy)' if vote_avg and vote_count else 'N/A'
-        ext = requests.get(f'https://api.themoviedb.org/3/{endpoint}/{tmdb_id}/external_ids?api_key={TMDB_API_KEY}')
-        imdb_id = ext.json().get('imdb_id')
-        imdb_rating, rt_rating = fetch_omdb_rating(imdb_id) if imdb_id else ('N/A', 'N/A')
-
-        cols = st.columns([1,3])
-        with cols[0]:
-            if poster_url:
-                st.markdown(
-                    f'<a href="https://www.imdb.com/title/{imdb_id}" target="_blank">'
-                    f'<img src="{poster_url}" width="100" style="border-radius:12px; cursor:pointer;"></a>'
-                    if imdb_id else f'<img src="{poster_url}" width="100" style="border-radius:12px;">',
-                    unsafe_allow_html=True
-                )
-        with cols[1]:
-            st.markdown(f'**{title}** ({year})')
-            st.markdown(f'🎯 IMDb: {imdb_rating} | 🍅 RT: {rt_rating} | {fallback_rating}')
-            with st.form(f'form_{tmdb_id}'):
-                prio = st.slider('🎯 Priority', 1, 100, 50)
-                if st.form_submit_button('➕ Add to Watchlist'):
-                    cat = 'movies' if content_type == 'movie' else 'shows'
-                    ref.child(f'to_watch_firebase/{cat}/{imdb_id or tmdb_id}').set({
-                        'title': title,
-                        'year': year,
-                        'poster': poster_url,
-                        'imdbRating': imdb_rating,
-                        'rtRating': rt_rating,
-                        'priority': prio
-                    })
-                    st.success('✅ Eklendi')
-                    st.query_params.clear()
-                    st.session_state['page'] = 'Movies' if cat == 'movies' else 'TV Shows'
-                    st.rerun()
