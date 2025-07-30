@@ -63,7 +63,7 @@ def list_and_add_recent(content_type, label, db_category, api_endpoint, date_fie
         cols = st.columns([1, 3])
         with cols[0]:
             if poster_url:
-                st.image(poster_url, width=100)
+                st.markdown(f'<a href="https://www.imdb.com/title/{item.get("imdb_id", "")}" target="_blank"><img src="{poster_url}" width="100"></a>' if item.get('imdb_id') else f'<img src="{poster_url}" width="100">', unsafe_allow_html=True)
         with cols[1]:
             st.markdown(f"**{title}** ({year})")
             st.markdown(f"🎯 IMDb: N/A | 🍅 RT: N/A")
@@ -119,7 +119,7 @@ if query:
 
         for r in results:
             tmdb_id = r.get("id")
-            type_map = {"Movie": "movie", "TV Show": "tv", "Actor/Actress": "person"} 
+            type_map = {"Movie": "movie", "TV Show": "tv", "Actor/Actress": "person"}
             media_type = type_map.get(search_type, "movie")
             external_ids_url = f"https://api.themoviedb.org/3/{media_type}/{tmdb_id}/external_ids?api_key={TMDB_API_KEY}"
             imdb_id_resp = requests.get(external_ids_url).json().get("imdb_id")
@@ -154,7 +154,7 @@ if query:
             cols = st.columns([1, 3])
             with cols[0]:
                 if poster_url:
-                    st.image(poster_url, width=100)
+                    st.markdown(f'<a href="https://www.imdb.com/title/{item.get("imdb_id", "")}" target="_blank"><img src="{poster_url}" width="100"></a>' if item.get('imdb_id') else f'<img src="{poster_url}" width="100">', unsafe_allow_html=True)
             with cols[1]:
                 st.markdown(f"**{title}** ({year})")
                 st.markdown(f"🎯 IMDb: {imdb_rating} | 🍅 RT: {rt_rating}")
@@ -190,7 +190,7 @@ if movies_data:
         cols = st.columns([1, 3])
         with cols[0]:
             if movie.get("poster"):
-                st.image(movie["poster"], width=120)
+                st.markdown(f'<a href="https://www.imdb.com/title/{imdb_id}" target="_blank"><img src="{movie["poster"]}" width="120"></a>' if imdb_id.startswith('tt') else f'<img src="{movie["poster"]}" width="120">', unsafe_allow_html=True)
         with cols[1]:
             st.markdown(f"**{i}) {movie['title']}** ({movie['year']})")
             st.markdown(f"🎯 IMDb: {movie['imdbRating']} | 🍅 RT: {movie['rtRating']}")
@@ -215,3 +215,4 @@ if movies_data:
                     st.rerun()
 else:
     st.info("Henüz bu kategoriye öğe eklenmemiş.")
+
