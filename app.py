@@ -170,8 +170,7 @@ if query:
                     submitted = st.form_submit_button("➕ Listeye Ekle")
                     if submitted:
                         category = "movies" if search_type == "Movie" else "shows"
-            st.query_params.update({"q": ""})
-            ref.child(f"to_watch_firebase/{category}/{imdb_id_resp or tmdb_id}").set({
+                        ref.child(f"to_watch_firebase/{category}/{imdb_id_resp or tmdb_id}").set({
                             "title": title,
                             "year": year,
                             "poster": poster_url,
