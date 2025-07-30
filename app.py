@@ -25,7 +25,20 @@ def tmdb_search(query, search_type):
         return []
     return response.json().get("results", [])
 
-def fetch_omdb_rating(imdb_id):
+def fetch_omdb_rating(imdb_id, fallback_vote=None, fallback_votes=None):
+    url = f"http://www.omdbapi.com/?apikey={OMDB_API_KEY}&i={imdb_id}"
+    try:
+        response = requests.get(url, timeout=5)
+        if response.status_code == 200:
+            data = response.json()
+            if data.get("Response") == "True":
+                imdb_rating = data.get("imdbRating", "N/A")
+                rt_rating = next((r["Value"] for r in data.get("Ratings", []) if r["Source"] == "Rotten Tomatoes"), "N/A")
+                return imdb_rating, rt_rating
+    except:
+        pass
+    fallback_rating = f"{fallback_vote}/10 ⭐️ ({fallback_votes} oy)" if fallback_vote is not None else "N/A"
+    return fallback_rating, "N/A"
     url = f"http://www.omdbapi.com/?apikey={OMDB_API_KEY}&i={imdb_id}"
     response = requests.get(url)
     if response.status_code == 200:
@@ -66,7 +79,10 @@ def list_and_add_recent(content_type, label, db_category, api_endpoint, date_fie
                 st.markdown(f'<a href="https://www.imdb.com/title/{item.get("imdb_id", "")}" target="_blank"><img src="{poster_url}" width="100"></a>' if item.get('imdb_id') else f'<img src="{poster_url}" width="100">', unsafe_allow_html=True)
         with cols[1]:
             st.markdown(f"**{title}** ({year})")
-            st.markdown(f"🎯 IMDb: N/A | 🍅 RT: N/A")
+        vote_avg = item.get("vote_average", 0)
+        vote_count = item.get("vote_count", 0)
+        fallback_rating = f"{vote_avg}/10 ⭐️ ({vote_count} oy)" if vote_avg else "N/A"
+        st.markdown(f"🎯 IMDb: {fallback_rating} | 🍅 RT: N/A")
             with st.form(f"{key_prefix}_form_{item['id']}"):
                 priority = st.slider("🎯 İzleme Sırası (1–100)", 1, 100, 50, key=f"{key_prefix}_priority_{item['id']}")
                 submitted = st.form_submit_button("➕ Listeye Ekle")
@@ -149,7 +165,9 @@ if query:
             poster_path = r.get("poster_path")
             poster_url = f"https://image.tmdb.org/t/p/w500{poster_path}" if poster_path else ""
             imdb_id_resp = r.get("imdb_id")
-            imdb_rating, rt_rating = fetch_omdb_rating(imdb_id_resp) if imdb_id_resp else ("N/A", "N/A")
+    vote_avg = r.get("vote_average", 0)
+    vote_count = r.get("vote_count", 0)
+            imdb_rating, rt_rating = fetch_omdb_rating(imdb_id_resp, vote_avg, vote_count) if imdb_id_resp else ("N/A", "N/A")
 
             cols = st.columns([1, 3])
             with cols[0]:
@@ -215,4 +233,3 @@ if movies_data:
                     st.rerun()
 else:
     st.info("Henüz bu kategoriye öğe eklenmemiş.")
-
