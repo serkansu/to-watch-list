@@ -159,8 +159,8 @@ with cols[0]:
                     imdb_url = f"https://www.imdb.com/title/{imdb_id_resp}" if imdb_id_resp else ""
                     st.markdown(
                         f'<a href="{imdb_url}" target="_blank">'
-                        f'<img src="{poster_url}" width="100" style="border-radius:12px; cursor:pointer;"></a>' 
-                        if imdb_id_resp else 
+                        f'<img src="{poster_url}" width="100" style="border-radius:12px; cursor:pointer;"></a>'
+                        if imdb_id_resp else
                         f'<img src="{poster_url}" width="100" style="border-radius:12px;">',
                         unsafe_allow_html=True
                     )
@@ -205,7 +205,7 @@ with cols[0]:
                 st.markdown(
                     f'<a href="{imdb_url}" target="_blank">'
                     f'<img src="{movie["poster"]}" width="120" style="border-radius:12px; cursor:pointer;"></a>'
-                    if imdb_id else 
+                    if imdb_id else
                     f'<img src="{movie["poster"]}" width="120" style="border-radius:12px;">',
                     unsafe_allow_html=True
                 )
