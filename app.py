@@ -1,13 +1,4 @@
-# Dummy veriler – son 4 haftalık içerikler (test amaçlı)
-last_4_weeks_movies = [
-    {"title": "Test Movie 1"},
-    {"title": "Test Movie 2"},
-]
 
-last_4_weeks_shows = [
-    {"title": "Test Show 1"},
-    {"title": "Test Show 2"},
-]
 import streamlit as st
 import json
 import requests
@@ -16,6 +7,11 @@ from datetime import datetime, timedelta
 from dotenv import load_dotenv
 
 load_dotenv()
+
+# Watch list initialization in session_state
+if "watch_list" not in st.session_state:
+    st.session_state.watch_list = {"movies": [], "shows": []}
+
 TMDB_API_KEY = os.getenv("TMDB_API_KEY")
 OMDB_API_KEY = os.getenv("OMDB_API_KEY")
 
@@ -242,6 +238,8 @@ st.subheader("📅 Last 4 Weeks - Movies")
 for movie in last_4_weeks_movies:
     st.write(movie["title"])
     if st.button("Add to Watch List", key=f"add_last4_movie_{movie['title']}"):
+        if movie not in st.session_state.watch_list["movies"]:
+            st.session_state.watch_list["movies"].append(movie)
         if movie not in watch_list["movies"]:
             watch_list["movies"].append(movie)
 
@@ -250,5 +248,7 @@ st.subheader("📅 Last 4 Weeks - Shows")
 for show in last_4_weeks_shows:
     st.write(show["title"])
     if st.button("Add to Watch List", key=f"add_last4_show_{show['title']}"):
+        if show not in st.session_state.watch_list["shows"]:
+            st.session_state.watch_list["shows"].append(show)
         if show not in watch_list["shows"]:
             watch_list["shows"].append(show)
