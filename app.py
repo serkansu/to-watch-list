@@ -1,4 +1,3 @@
-
 import streamlit as st
 import json
 import requests
@@ -12,6 +11,9 @@ OMDB_API_KEY = os.getenv("OMDB_API_KEY")
 
 from firebase_setup import get_database
 
+ref = get_database()
+
+# --- Yardımcı Fonksiyonlar ---
 def tmdb_search(query, search_type):
     type_map = {"Movie": "movie", "TV Show": "tv", "Actor/Actress": "person"}
     media_type = type_map.get(search_type, "movie")
@@ -58,31 +60,33 @@ def list_and_add_recent(content_type, label, db_category, api_endpoint, date_fie
         poster_path = item.get("poster_path")
         poster_url = f"https://image.tmdb.org/t/p/w500{poster_path}" if poster_path else ""
 
-        st.markdown(f"**{title}** ({year})")
-        if poster_url:
-            st.image(poster_url, width=120)
+        cols = st.columns([1, 3])
+        with cols[0]:
+            if poster_url:
+                st.image(poster_url, width=100)
+        with cols[1]:
+            st.markdown(f"**{title}** ({year})")
+            st.markdown(f"🎯 IMDb: N/A | 🍅 RT: N/A")
+            with st.form(f"{key_prefix}_form_{item['id']}"):
+                priority = st.slider("🎯 İzleme Sırası (1–100)", 1, 100, 50, key=f"{key_prefix}_priority_{item['id']}")
+                submitted = st.form_submit_button("➕ Listeye Ekle")
+                if submitted:
+                    ref.child(f"to_watch_firebase/{db_category}/{item['id']}").set({
+                        "title": title,
+                        "year": year,
+                        "poster": poster_url,
+                        "imdbRating": "N/A",
+                        "rtRating": "N/A",
+                        "priority": priority
+                    })
+                    st.success("✅ Başarıyla eklendi.")
 
-        with st.form(f"{key_prefix}_form_{item['id']}"):
-            priority = st.slider("🎯 İzleme Sırası (1-100)", 1, 100, 50, key=f"{key_prefix}_priority_{item['id']}")
-            submitted = st.form_submit_button("➕ Listeye Ekle")
-            if submitted:
-                ref.child(f"to_watch_firebase/{db_category}/{item['id']}").set({
-                    "title": title,
-                    "year": year,
-                    "poster": poster_url,
-                    "imdbRating": "N/A",
-                    "rtRating": "N/A",
-                    "priority": priority
-                })
-                st.success("✅ Başarıyla eklendi.")
-
-ref = get_database()
-
+# --- UI Başlangıcı ---
 st.set_page_config(page_title="Serkan's Watch App", layout="centered")
 st.title("🎬 Serkan's Watch App")
 
+# --- Üst Butonlar ---
 col_refresh, col_movies, col_shows = st.columns([1, 2, 2])
-
 with col_refresh:
     if st.button("🔄 Refresh page", key="refresh", help="Sayfayı yenile"):
         st.query_params.update({"q": ""})
@@ -96,6 +100,7 @@ with col_shows:
     if st.button("📺 Last 4 Weeks – TV Shows"):
         list_and_add_recent("tv show", "📺", "shows", "tv", "first_air_date", "recent_show")
 
+# --- Arama Kutusu ---
 search_type = st.radio("Search type:", ["Movie", "TV Show", "Actor/Actress"], horizontal=True)
 default_query = st.query_params.get("q", "")
 query = st.text_input("🔍 Search for a title or actor:", value=default_query, key="search_box")
@@ -153,20 +158,11 @@ if query:
             with cols[1]:
                 st.markdown(f"**{title}** ({year})")
                 st.markdown(f"🎯 IMDb: {imdb_rating} | 🍅 RT: {rt_rating}")
-                form_key = f"form_{imdb_id_resp or tmdb_id}_{title.replace(' ', '_')}"
-                with st.form(form_key):
-                    priority = st.slider("🎯 İzleme Sırası (1-100)", 1, 100, 50)
+                with st.form(f"form_{imdb_id_resp or tmdb_id}_{title.replace(' ', '_')}"):
+                    priority = st.slider("🎯 İzleme Sırası (1–100)", 1, 100, 50)
                     submitted = st.form_submit_button("➕ Listeye Ekle")
                     if submitted:
-                        if search_type == "Movie":
-                            category = "movies"
-                        elif search_type == "TV Show":
-                            category = "shows"
-                        else:
-                            media_type = r.get("media_type", "")
-                            if not media_type:
-                                media_type = "tv" if r.get("name") else "movie"
-                            category = "shows" if media_type == "tv" else "movies"
+                        category = "movies" if search_type == "Movie" else "shows"
                         ref.child(f"to_watch_firebase/{category}/{imdb_id_resp or tmdb_id}").set({
                             "title": title,
                             "year": year,
@@ -181,6 +177,7 @@ if query:
     else:
         st.warning("❌ Hiç sonuç bulunamadı.")
 
+# --- Watchlist ---
 st.markdown("---")
 category_selected = st.radio("📂 Watchlist kategorisi:", ["Movies", "TV Shows"], horizontal=True)
 db_key = "movies" if category_selected == "Movies" else "shows"
