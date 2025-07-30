@@ -45,6 +45,9 @@ def fetch_tmdb_rating(tmdb_id):
     return "N/A", "N/A"
 
 
+
+
+
 def fetch_tmdb_rating(tmdb_id):
     try:
         if not tmdb_id:
@@ -60,10 +63,44 @@ def fetch_tmdb_rating(tmdb_id):
         print(f"TMDB rating fetch error: {e}")
     return "N/A", "N/A"
 
-    url = f"http://www.omdbapi.com/?apikey={OMDB_API_KEY}&i={imdb_id}"
-    response = requests.get(url)
+
+def fetch_tmdb_rating(tmdb_id):
     try:
-        data = response.json()
+        if not tmdb_id:
+            return "N/A", "N/A"
+        if response.status_code == 200:
+            rt_rating = round(tmdb_vote * 10)  # % üzerinden Rotten Tomatoes benzeri
+            return tmdb_vote, rt_rating
+    except Exception as e:
+        print(f"TMDB rating fetch error: {e}")
+    return "N/A", "N/A"
+        if response.status_code == 200:
+            rt_rating = round(tmdb_vote * 10)  # % üzerinden Rotten Tomatoes benzeri
+            return tmdb_vote, rt_rating
+    except Exception as e:
+        print(f"TMDB rating fetch error: {e}")
+    return "N/A", "N/A"
+
+
+def fetch_tmdb_rating(tmdb_id):
+    try:
+        if not tmdb_id:
+            return "N/A", "N/A"
+        if response.status_code == 200:
+            rt_rating = round(tmdb_vote * 10)  # % üzerinden Rotten Tomatoes benzeri
+            return tmdb_vote, rt_rating
+    except Exception as e:
+        print(f"TMDB rating fetch error: {e}")
+    return "N/A", "N/A"
+        if response.status_code == 200:
+            rt_rating = round(tmdb_vote * 10)  # % üzerinden Rotten Tomatoes benzeri
+            return tmdb_vote, rt_rating
+    except Exception as e:
+        print(f"TMDB rating fetch error: {e}")
+    return "N/A", "N/A"
+
+    url = f"http://www.omdbapi.com/?apikey={OMDB_API_KEY}&i={imdb_id}"
+    try:
         imdb_rating = data.get("imdbRating", "N/A")
         rt_rating = next((r["Value"] for r in data.get("Ratings", []) if r["Source"] == "Rotten Tomatoes"), "N/A")
         return imdb_rating, rt_rating
@@ -75,11 +112,13 @@ def fetch_tmdb_rating(tmdb_id):
     try:
         if not tmdb_id:
             return "N/A", "N/A"
-        url = f"https://api.themoviedb.org/3/movie/{tmdb_id}?api_key={TMDB_API_KEY}"
-        response = requests.get(url)
         if response.status_code == 200:
-            data = response.json()
-            tmdb_vote = data.get("vote_average", 0)
+            rt_rating = round(tmdb_vote * 10)  # % üzerinden Rotten Tomatoes benzeri
+            return tmdb_vote, rt_rating
+    except Exception as e:
+        print(f"TMDB rating fetch error: {e}")
+    return "N/A", "N/A"
+        if response.status_code == 200:
             rt_rating = round(tmdb_vote * 10)  # % üzerinden Rotten Tomatoes benzeri
             return tmdb_vote, rt_rating
     except Exception as e:
@@ -88,7 +127,6 @@ def fetch_tmdb_rating(tmdb_id):
 
 def fetch_actor_movies(person_id):
     url = f"https://api.themoviedb.org/3/person/{person_id}/movie_credits?api_key={TMDB_API_KEY}"
-    response = requests.get(url)
     return response.json().get("cast", [])
 
 # --- UI Başlangıcı ---
@@ -198,7 +236,12 @@ if query:
             poster_path = r.get("poster_path")
             poster_url = f"https://image.tmdb.org/t/p/w500{poster_path}" if poster_path else ""
             imdb_id_resp = r.get("imdb_id")
-            imdb_rating, rt_rating = fetch_omdb_rating(imdb_id_resp) if imdb_id_resp else fetch_tmdb_rating(tmdb_id)
+            if imdb_id_resp:
+    imdb_rating, rt_rating = fetch_omdb_rating(imdb_id_resp)
+    if imdb_rating == "N/A" or rt_rating == "N/A":
+        imdb_rating, rt_rating = fetch_tmdb_rating(tmdb_id)
+else:
+    imdb_rating, rt_rating = fetch_tmdb_rating(tmdb_id)
 
             cols = st.columns([1, 3])
             with cols[0]:
@@ -279,12 +322,16 @@ else:
 
 
 def fetch_tmdb_rating(tmdb_id):
-    import requests
-    tmdb_api_key = os.getenv("TMDB_API_KEY")
-    if not tmdb_api_key:
-        return "N/A", "N/A"
     try:
-        url = f"https://api.themoviedb.org/3/movie/{tmdb_id}?api_key={tmdb_api_key}"
+        if not tmdb_id:
+            return "N/A", "N/A"
+        if response.status_code == 200:
+            rt_rating = round(tmdb_vote * 10)  # % üzerinden Rotten Tomatoes benzeri
+            return tmdb_vote, rt_rating
+    except Exception as e:
+        print(f"TMDB rating fetch error: {e}")
+    return "N/A", "N/A"
+    try:
         resp = requests.get(url)
         if resp.status_code == 200:
             data = resp.json()
