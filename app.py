@@ -245,3 +245,18 @@ def fetch_tmdb_rating(tmdb_id):
     except:
         pass
     return "N/A", "N/A"
+
+
+
+def fetch_tmdb_rating(tmdb_id):
+    import os
+    import requests
+    tmdb_api_key = os.getenv("TMDB_API_KEY") or "your_tmdb_api_key_here"
+    url = f"https://api.themoviedb.org/3/movie/{{tmdb_id}}?api_key={{tmdb_api_key}}&language=en-US"
+    response = requests.get(url)
+    if response.status_code == 200:
+        data = response.json()
+        vote_average = data.get("vote_average", None)
+        return vote_average or 0, 0
+    else:
+        return 0, 0
