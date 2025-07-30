@@ -46,11 +46,16 @@ def fetch_actor_movies(person_id):
 st.set_page_config(page_title="Serkan's Watch App", layout="centered")
 st.title("🎬 Serkan's Watch App")
 
+col_center = st.columns([1, 2, 1])[1]
+with col_center:
+    if st.button("🧹🔄 Clean & Refresh", key="clean_refresh_button"):
+        st.query_params.clear()
+        st.rerun()
+
+
 col1, col2, col3 = st.columns([1, 2, 2])
 with col1:
-    if st.button("🔄", help="Refresh", key="refresh_button"):
-        st.query_params.update({"q": ""})
-        st.rerun()
+    
 
 with col2:
     if st.button("🆕 Last 4 Weeks – Movies", key="last4weeks_movies"):
@@ -273,14 +278,9 @@ st.title('🎬 Serkan Watch App')
 # Butonlar ve Temizleme
 col1, col2, col3, col4 = st.columns([1,1,2,2])
 with col1:
-    if st.button("🔄", help="Refresh", key="refresh_button"):
-        st.query_params.clear()
-        st.rerun()
+    
 with col2:
-    if st.button("🧹 Clean Searchbox", key="clean_searchbox"):
-        st.query_params.clear()
-        st.session_state['page'] = 'Movies'
-        st.rerun()
+    
 with col3:
     if st.button("🆕 Last 4 Weeks – Movies", key="last4weeks_movies"):
         st.session_state['recent_type'] = 'movie'
