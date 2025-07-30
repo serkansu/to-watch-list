@@ -172,6 +172,10 @@ if not imdb_rating or imdb_rating == "N/A":
                     submitted = st.form_submit_button("➕ Listeye Ekle")
                     if submitted:
                         category = "movies" if search_type == "Movie" else "shows"
+if category == 'movie':
+    st.session_state.watch_list['movies'].append(item)
+else:
+    st.session_state.watch_list['shows'].append(item)
                         ref.child(f"to_watch_firebase/{category}/{imdb_id_resp or tmdb_id}").set({
                             "title": title,
                             "year": year,
