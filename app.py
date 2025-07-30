@@ -280,6 +280,7 @@ col1, col2, col3, col4 = st.columns([1,1,2,2])
 with col1:
     
 with col2:
+    st.write("")  # placeholder eklendi
     
 with col3:
     if st.button("🆕 Last 4 Weeks – Movies", key="last4weeks_movies"):
