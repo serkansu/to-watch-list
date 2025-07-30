@@ -161,7 +161,7 @@ if query:
                 if poster_url:
                     imdb_url = f"https://www.imdb.com/title/{imdb_id_resp}" if imdb_id_resp else ""
                     st.markdown(
-        if st.button('Add to Watch List', key=f"add_result_{r.get('title', r.get('name', 'no_title'))}"):
+        if st.button('Add to Watch List', key=f"add_result_{r.get(\"title\", r.get(\"name\", \"no_title\"))}"):
             entry = {'title': r.get('title') or r.get('name', 'Unnamed')}
             if search_type == 'Movie':
                 if entry not in st.session_state.watch_list['movies']:
