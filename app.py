@@ -149,7 +149,7 @@ if query:
             poster_path = r.get("poster_path")
             poster_url = f"https://image.tmdb.org/t/p/w500{poster_path}" if poster_path else ""
             imdb_id_resp = r.get("imdb_id")
-            imdb_rating, rt_rating = fetch_omdb_rating(imdb_id_resp) if imdb_id_resp else ("N/A", "N/A")
+            imdb_rating, rt_rating = fetch_omdb_rating(imdb_id_resp) if imdb_id_resp else fetch_tmdb_rating(tmdb_id)
 
             cols = st.columns([1, 3])
             with cols[0]:
@@ -227,3 +227,21 @@ if movies_data:
                     st.rerun()
 else:
     st.info("Henüz bu kategoriye öğe eklenmemiş.")
+
+
+def fetch_tmdb_rating(tmdb_id):
+    import requests
+    tmdb_api_key = os.getenv("TMDB_API_KEY")
+    if not tmdb_api_key:
+        return "N/A", "N/A"
+    try:
+        url = f"https://api.themoviedb.org/3/movie/{tmdb_id}?api_key={tmdb_api_key}"
+        resp = requests.get(url)
+        if resp.status_code == 200:
+            data = resp.json()
+            vote_average = data.get("vote_average")
+            rt_score = int(vote_average * 10) if vote_average else "N/A"
+            return str(vote_average), str(rt_score)
+    except:
+        pass
+    return "N/A", "N/A"
