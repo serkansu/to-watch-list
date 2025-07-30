@@ -133,18 +133,13 @@ if query:
                 results_expanded.extend(actor_movies)
             results = results_expanded
 
-        # IMDb ID’leri sonuçlara ekliyoruz
-for r in results:
-    tmdb_id = r.get("id")
-    type_map = {"Movie": "movie", "TV Show": "tv", "Actor/Actress": "person"}
-    media_type = type_map.get(search_type, "movie")
-    external_ids_url = f"https://api.themoviedb.org/3/{media_type}/{tmdb_id}/external_ids?api_key={TMDB_API_KEY}"
-    imdb_id_resp = requests.get(external_ids_url).json().get("imdb_id")
-    r["imdb_id"] = imdb_id_resp
-
-st.success(f"🔍 {len(results)} sonuç bulundu.")
-
-for r in results:
+        for r in results:
+            tmdb_id = r.get("id")
+            type_map = {"Movie": "movie", "TV Show": "tv", "Actor/Actress": "person"}
+            media_type = type_map.get(search_type, "movie")
+            external_ids_url = f"https://api.themoviedb.org/3/{media_type}/{tmdb_id}/external_ids?api_key={TMDB_API_KEY}"
+            imdb_id_resp = requests.get(external_ids_url).json().get("imdb_id")
+            r["imdb_id"] = imdb_id_resp
 
         st.success(f"🔍 {len(results)} sonuç bulundu.")
         for r in results:
