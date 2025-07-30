@@ -63,7 +63,7 @@ def list_and_add_recent(content_type, label, db_category, api_endpoint, date_fie
         cols = st.columns([1, 3])
         with cols[0]:
             if poster_url:
-    st.markdown(f'<a href="https://www.imdb.com/title/{imdb_id}" target="_blank"><img src="{poster_url}" width="100"></a>' if imdb_id else f'<img src="{poster_url}" width="100">', unsafe_allow_html=True)
+                st.image(poster_url, width=100)
         with cols[1]:
             st.markdown(f"**{title}** ({year})")
             st.markdown(f"🎯 IMDb: N/A | 🍅 RT: N/A")
@@ -154,7 +154,7 @@ if query:
             cols = st.columns([1, 3])
             with cols[0]:
                 if poster_url:
-    st.markdown(f'<a href="https://www.imdb.com/title/{imdb_id}" target="_blank"><img src="{poster_url}" width="100"></a>' if imdb_id else f'<img src="{poster_url}" width="100">', unsafe_allow_html=True)
+                    st.image(poster_url, width=100)
             with cols[1]:
                 st.markdown(f"**{title}** ({year})")
                 st.markdown(f"🎯 IMDb: {imdb_rating} | 🍅 RT: {rt_rating}")
@@ -190,7 +190,7 @@ if movies_data:
         cols = st.columns([1, 3])
         with cols[0]:
             if movie.get("poster"):
-                st.markdown(f'<a href="https://www.imdb.com/title/{imdb_id}" target="_blank"><img src="{movie["poster"]}" width="120"></a>' if imdb_id else f'<img src="{movie["poster"]}" width="120">', unsafe_allow_html=True)
+                st.image(movie["poster"], width=120)
         with cols[1]:
             st.markdown(f"**{i}) {movie['title']}** ({movie['year']})")
             st.markdown(f"🎯 IMDb: {movie['imdbRating']} | 🍅 RT: {movie['rtRating']}")
