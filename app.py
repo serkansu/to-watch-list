@@ -176,14 +176,14 @@ if category == 'movie':
     st.session_state.watch_list['movies'].append(item)
 else:
     st.session_state.watch_list['shows'].append(item)
-                        ref.child(f"to_watch_firebase/{category}/{imdb_id_resp or tmdb_id}").set({
-                            "title": title,
-                            "year": year,
-                            "poster": poster_url,
-                            "imdbRating": imdb_rating,
-                            "rtRating": rt_rating,
-                            "priority": priority
-                        })
+        ref.child(f"to_watch_firebase/{category}/{imdb_id_resp or tmdb_id}").set({
+            "title": title,
+            "year": year,
+            "poster": poster_url,
+            "imdbRating": imdb_rating,
+            "rtRating": rt_rating,
+            "priority": priority
+        })
                         st.success("✅ Başarıyla eklendi.")
                         st.query_params.update({"q": ""})
                         st.rerun()
