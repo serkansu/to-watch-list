@@ -161,6 +161,16 @@ if query:
                 if poster_url:
                     imdb_url = f"https://www.imdb.com/title/{imdb_id_resp}" if imdb_id_resp else ""
                     st.markdown(
+        if st.button('Add to Watch List', key=f"add_result_{r.get('title', r.get('name', 'no_title'))}"):
+            entry = {'title': r.get('title') or r.get('name', 'Unnamed')}
+            if search_type == 'Movie':
+                if entry not in st.session_state.watch_list['movies']:
+                    st.session_state.watch_list['movies'].append(entry)
+                    st.success(f"🎬 '{entry['title']}' added to your movie watch list.")
+            elif search_type == 'TV Show':
+                if entry not in st.session_state.watch_list['shows']:
+                    st.session_state.watch_list['shows'].append(entry)
+                    st.success(f"📺 '{entry['title']}' added to your show watch list.")
                         f'<a href="{imdb_url}" target="_blank">'
                         f'<img src="{poster_url}" width="100" style="border-radius:12px; cursor:pointer;"></a>' 
                         if imdb_id_resp else 
