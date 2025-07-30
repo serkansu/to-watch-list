@@ -1,14 +1,3 @@
-# Dummy veriler – son 4 haftalık içerikler (test amaçlı)
-last_4_weeks_movies = [
-    {"title": "Test Movie 1"},
-    {"title": "Test Movie 2"},
-]
-
-last_4_weeks_shows = [
-    {"title": "Test Show 1"},
-    {"title": "Test Show 2"},
-]
-
 
 import streamlit as st
 import json
@@ -251,8 +240,6 @@ for movie in last_4_weeks_movies:
     if st.button("Add to Watch List", key=f"add_last4_movie_{movie['title']}"):
         if movie not in st.session_state.watch_list["movies"]:
             st.session_state.watch_list["movies"].append(movie)
-        if movie not in watch_list["movies"]:
-            watch_list["movies"].append(movie)
 
 # 📺 Last 4 Weeks - Shows
 st.subheader("📅 Last 4 Weeks - Shows")
@@ -261,5 +248,3 @@ for show in last_4_weeks_shows:
     if st.button("Add to Watch List", key=f"add_last4_show_{show['title']}"):
         if show not in st.session_state.watch_list["shows"]:
             st.session_state.watch_list["shows"].append(show)
-        if show not in watch_list["shows"]:
-            watch_list["shows"].append(show)
