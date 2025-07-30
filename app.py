@@ -48,17 +48,17 @@ st.title("🎬 Serkan's Watch App")
 
 col1, col2, col3 = st.columns([1, 2, 2])
 with col1:
-    if st.button("🔄", help="Refresh"):
+    if st.button("🔄", help="Refresh", key="refresh_button"):
         st.query_params.update({"q": ""})
         st.rerun()
 
 with col2:
-    if st.button("🆕 Last 4 Weeks – Movies"):
+    if st.button("🆕 Last 4 Weeks – Movies", key="last4weeks_movies"):
         st.session_state['recent_type'] = "movie"
         st.session_state['trigger'] = True
 
 with col3:
-    if st.button("📺 Last 4 Weeks – TV Shows"):
+    if st.button("📺 Last 4 Weeks – TV Shows", key="last4weeks_tv"):
         st.session_state['recent_type'] = "tv"
         st.session_state['trigger'] = True
 
@@ -167,7 +167,7 @@ if query:
                 st.markdown(f"🎯 IMDb: {imdb_rating} | 🍅 RT: {rt_rating}")
                 with st.form(f"form_{imdb_id_resp or tmdb_id}_{title.replace(' ', '_')}"):
                     priority = st.slider("🎯 İzleme Sırası (1–100)", 1, 100, 50)
-                    submitted = st.form_submit_button("➕ Listeye Ekle")
+                    submitted = st.form_submit_button("➕ Listeye Ekle", key="form_addtolist")
                     if submitted:
                         category = "movies" if search_type == "Movie" else "shows"
                         ref.child(f"to_watch_firebase/{category}/{imdb_id_resp or tmdb_id}").set({
@@ -273,20 +273,20 @@ st.title('🎬 Serkan Watch App')
 # Butonlar ve Temizleme
 col1, col2, col3, col4 = st.columns([1,1,2,2])
 with col1:
-    if st.button('🔄', help='Refresh'):
+    if st.button("🔄", help="Refresh", key="refresh_button"):
         st.query_params.clear()
         st.rerun()
 with col2:
-    if st.button('🧹 Clean Searchbox'):
+    if st.button("🧹 Clean Searchbox", key="clean_searchbox"):
         st.query_params.clear()
         st.session_state['page'] = 'Movies'
         st.rerun()
 with col3:
-    if st.button('🆕 Last 4 Weeks – Movies'):
+    if st.button("🆕 Last 4 Weeks – Movies", key="last4weeks_movies"):
         st.session_state['recent_type'] = 'movie'
         st.session_state['trigger'] = True
 with col4:
-    if st.button('📺 Last 4 Weeks – TV Shows'):
+    if st.button("📺 Last 4 Weeks – TV Shows", key="last4weeks_tv"):
         st.session_state['recent_type'] = 'tv'
         st.session_state['trigger'] = True
 
