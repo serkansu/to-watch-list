@@ -153,7 +153,7 @@ if query:
 if not imdb_rating or imdb_rating == "N/A":
     imdb_rating = round(r.get('vote_average', 0), 1)
 
-            cols = st.columns([1, 3])
+cols = st.columns([1, 3])
             with cols[0]:
                 if poster_url:
                     imdb_url = f"https://www.imdb.com/title/{imdb_id_resp}" if imdb_id_resp else ""
