@@ -77,12 +77,24 @@ def list_and_add_recent(content_type, label, db_category, api_endpoint, date_fie
         with cols[0]:
             if poster_url:
                 st.markdown(f'<a href="https://www.imdb.com/title/{item.get("imdb_id", "")}" target="_blank"><img src="{poster_url}" width="100"></a>' if item.get('imdb_id') else f'<img src="{poster_url}" width="100">', unsafe_allow_html=True)
-        with cols[1]:
+                with cols[1]:
+            imdb_id = fetch_imdb_id(item["id"], api_endpoint)
+            imdb_link = f"https://www.imdb.com/title/{imdb_id}" if imdb_id else ""
+            imdb_rating, rt_rating, fallback_text = fetch_omdb_rating(imdb_id)
+
             st.markdown(f"**{title}** ({year})")
-        vote_avg = item.get("vote_average", 0)
-        vote_count = item.get("vote_count", 0)
-        fallback_rating = f"{vote_avg}/10 ⭐️ ({vote_count} oy)" if vote_avg else "N/A"
-        st.markdown(f"🎯 IMDb: {fallback_rating} | 🍅 RT: N/A")
+            if imdb_link:
+                st.markdown(f"[🔗 IMDb Sayfası]({imdb_link})", unsafe_allow_html=True)
+            else:
+                st.markdown("🔗 IMDb sayfası bulunamadı.")
+
+            rating_display = (
+                f"🎯 IMDb: {imdb_rating} | 🍅 RT: {rt_rating}"
+                if imdb_rating != "N/A" or rt_rating != "N/A"
+                else fallback_text
+            )
+            st.markdown(rating_display)
+
             with st.form(f"{key_prefix}_form_{item['id']}"):
                 priority = st.slider("🎯 İzleme Sırası (1–100)", 1, 100, 50, key=f"{key_prefix}_priority_{item['id']}")
                 submitted = st.form_submit_button("➕ Listeye Ekle")
@@ -91,8 +103,8 @@ def list_and_add_recent(content_type, label, db_category, api_endpoint, date_fie
                         "title": title,
                         "year": year,
                         "poster": poster_url,
-                        "imdbRating": "N/A",
-                        "rtRating": "N/A",
+                        "imdbRating": imdb_rating,
+                        "rtRating": rt_rating,
                         "priority": priority
                     })
                     st.success("✅ Başarıyla eklendi.")
