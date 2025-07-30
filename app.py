@@ -185,8 +185,6 @@ if query:
             imdb_id_resp = r.get("imdb_id")
             if imdb_id_resp:
     imdb_rating, rt_rating = fetch_omdb_rating(imdb_id_resp)
-    if imdb_rating == "N/A" or rt_rating == "N/A":
-        imdb_rating, rt_rating = fetch_tmdb_rating(tmdb_id)
 else:
     imdb_rating, rt_rating = fetch_tmdb_rating(tmdb_id)
 
