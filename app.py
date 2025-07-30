@@ -94,8 +94,8 @@ if st.session_state.get("trigger", False):
         vote_count = item.get("vote_count")
         fallback_rating = f"⭐ {vote_avg}/10 ({vote_count} oy)" if vote_avg and vote_count else "N/A"
 
-        cols = st.columns([1, 3])
-        with cols[0]:
+cols = st.columns([1, 3])
+with cols[0]:
             if poster_url:
                 imdb_url = f"https://www.imdb.com/title/{imdb_id}" if imdb_id else ""
                 st.markdown(
@@ -105,7 +105,7 @@ if st.session_state.get("trigger", False):
                     f'<img src="{poster_url}" width="100" style="border-radius:12px;">',
                     unsafe_allow_html=True
                 )
-        with cols[1]:
+with cols[1]:
             st.markdown(f"**{title}** ({year})")
             st.markdown(f"🎯 IMDb: {imdb_rating} | 🍅 RT: {rt_rating} | {fallback_rating}")
 
@@ -154,7 +154,7 @@ if not imdb_rating or imdb_rating == "N/A":
     imdb_rating = round(r.get('vote_average', 0), 1)
 
 cols = st.columns([1, 3])
-            with cols[0]:
+with cols[0]:
                 if poster_url:
                     imdb_url = f"https://www.imdb.com/title/{imdb_id_resp}" if imdb_id_resp else ""
                     st.markdown(
@@ -164,7 +164,7 @@ cols = st.columns([1, 3])
                         f'<img src="{poster_url}" width="100" style="border-radius:12px;">',
                         unsafe_allow_html=True
                     )
-            with cols[1]:
+with cols[1]:
                 st.markdown(f"**{title}** ({year})")
                 st.markdown(f"🎯 IMDb: {imdb_rating} | 🍅 RT: {rt_rating}")
                 with st.form(f"form_{imdb_id_resp or tmdb_id}_{title.replace(' ', '_')}"):
@@ -198,8 +198,8 @@ movies_data = ref.child(f"to_watch_firebase/{db_key}").get()
 if movies_data:
     sorted_movies = sorted(movies_data.items(), key=lambda x: x[1].get("priority", 50))
     for i, (imdb_id, movie) in enumerate(sorted_movies, start=1):
-        cols = st.columns([1, 3])
-        with cols[0]:
+cols = st.columns([1, 3])
+with cols[0]:
             if movie.get("poster"):
                 imdb_url = f"https://www.imdb.com/title/{imdb_id}" if imdb_id else ""
                 st.markdown(
@@ -209,7 +209,7 @@ if movies_data:
                     f'<img src="{movie["poster"]}" width="120" style="border-radius:12px;">',
                     unsafe_allow_html=True
                 )
-        with cols[1]:
+with cols[1]:
             st.markdown(f"**{i}) {movie['title']}** ({movie['year']})")
             st.markdown(f"🎯 IMDb: {movie['imdbRating']} | 🍅 RT: {movie['rtRating']}")
             new_priority = st.slider(f"🎛️ Öncelik:", 1, 100, movie["priority"], key=f"edit_{imdb_id}")
