@@ -227,3 +227,19 @@ if movies_data:
                     st.rerun()
 else:
     st.info("Henüz bu kategoriye öğe eklenmemiş.")
+
+# 🎬 Last 4 Weeks - Movies
+st.subheader("📅 Last 4 Weeks - Movies")
+for movie in last_4_weeks_movies:
+    st.write(movie["title"])
+    if st.button("Add to Watch List", key=f"add_last4_movie_{movie['title']}"):
+        if movie not in watch_list["movies"]:
+            watch_list["movies"].append(movie)
+
+# 📺 Last 4 Weeks - Shows
+st.subheader("📅 Last 4 Weeks - Shows")
+for show in last_4_weeks_shows:
+    st.write(show["title"])
+    if st.button("Add to Watch List", key=f"add_last4_show_{show['title']}"):
+        if show not in watch_list["shows"]:
+            watch_list["shows"].append(show)
